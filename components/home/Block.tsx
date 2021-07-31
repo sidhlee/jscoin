@@ -6,6 +6,8 @@ type BlockProps = {
 };
 
 const Block: React.FC<BlockProps> = ({ hash, prevHash, nonce, timestamp }) => {
+  const isGenesisBlock = !!prevHash;
+  
   return <div></div>;
 };
 
