@@ -1,13 +1,28 @@
 import SHA256 from 'crypto-js/sha256';
 // const SHA256 = require('crypto-js/sha256');
 
+class Transaction {
+  /**
+   *
+   * @param input address of the wallet from which the coin is sent
+   * @param output address of the wallet to which the coin is sent
+   * @param amount
+   */
+  constructor(
+    public input: string | null,
+    public output: string,
+    public amount: number
+  ) {}
+}
+
 class Block {
   public hash: string;
   public nonce: number;
   constructor(
-    public index: number,
-    public timestamp: string,
-    public data: any,
+    // The order of the block is determined by their array index, not with the index we pass
+    // public index: number,
+    public timestamp: number,
+    public transactions: Transaction[],
     public prevHash: string = ''
   ) {
     // calc new hash when creating new block
@@ -17,10 +32,9 @@ class Block {
 
   calcHash() {
     return SHA256(
-      this.index +
-        this.prevHash +
+      this.prevHash +
         this.timestamp +
-        JSON.stringify(this.data) +
+        JSON.stringify(this.transactions) +
         this.nonce
     ).toString();
   }
@@ -42,30 +56,60 @@ class Block {
 }
 
 export class Blockchain {
-  public chain: Block[];
-  private difficulty: number;
-  constructor() {
-    this.chain = [this.createGenesisBlock()];
-    this.difficulty = 4;
-  }
+  public chain: Block[] = [this.createGenesisBlock()];
+  public pendingTransactions: Transaction[] = [];
+  private difficulty = 2;
+  public miningReward = 100;
+  constructor() {}
 
   createGenesisBlock() {
-    return new Block(0, '2021-08-01', 'Genesis Block', '0');
+    return new Block(new Date('2021-08-01').getTime(), [], '0');
   }
 
   getLastBlock() {
     return this.chain[this.chain.length - 1];
   }
 
-  addBlock(newBlock: Block) {
-    // Update new block's prevHash and hash based on the last block, then add it to the chain
+  minePendingTransactions(miningRewardAddress: string) {
+    // In real life, adding all the pending transactions are not possible because there are too many for 1mb block size limit.
+    // So miners get to choose which transactions to include
+    let block = new Block(Date.now(), this.pendingTransactions);
+    block.mine(this.difficulty);
 
-    // Take last block's hash and add it to new block as prevHash
-    newBlock.prevHash = this.getLastBlock().hash;
-    // Then re-calc new block's hash because prevHash is one of the inputs that the hash is based on
-    newBlock.mine(this.difficulty);
+    console.log('Block successfully mined');
+    this.chain.push(block);
 
-    this.chain.push(newBlock);
+    // clear pending transactions
+    this.pendingTransactions = [
+      // there is no input for mine reward
+      new Transaction(null, miningRewardAddress, this.miningReward),
+    ];
+  }
+
+  createTransaction(transaction: Transaction) {
+    this.pendingTransactions.push(transaction);
+  }
+
+  /**
+   * Go through all blocks in the chain to calculate balance
+   */
+  getBalanceOfAddress(address: string) {
+    let balance = 0;
+
+    for (const block of this.chain) {
+      for (const trans of block.transactions) {
+        // coin spent, take amount off from balance
+        if (trans.input === address) {
+          balance -= trans.amount;
+        }
+        // coin received, add amount to the balance
+        if (trans.output === address) {
+          balance += trans.amount;
+        }
+      }
+    }
+
+    return balance;
   }
 
   isValid() {
@@ -91,13 +135,21 @@ export class Blockchain {
 }
 
 let jsCoin = new Blockchain();
-console.log('Mining block 1..');
-jsCoin.addBlock(new Block(1, '2021-08-01', { amount: 4 }));
-console.log('Mining block 2..');
-jsCoin.addBlock(new Block(2, '2021-08-02', { amount: 10 }));
 
-// jsCoin.chain[2].data = { amount: 999 };
-// jsCoin.chain[2].hash = jsCoin.chain[2].calcHash();
+jsCoin.createTransaction(new Transaction('address1', 'address2', 100));
+jsCoin.createTransaction(new Transaction('address2', 'address1', 50));
 
-// console.log(JSON.stringify(jsCoin, null, 4));
-// console.log('Is blockchain valid? ' + jsCoin.isValid());
+console.log('\n Starting the mining...');
+jsCoin.minePendingTransactions('avid_investor');
+
+console.log(
+  '\nBalance of avid_investor is',
+  jsCoin.getBalanceOfAddress('avid_investor')
+);
+
+console.log('\n Starting the mining again...');
+jsCoin.minePendingTransactions('bot27');
+console.log(
+  '\nBalance of avid_investor is',
+  jsCoin.getBalanceOfAddress('avid_investor')
+);
