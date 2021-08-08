@@ -35,7 +35,15 @@ A unique signature is created for each transaction based on:
 - Transaction Data: hashed from input, output, and amount
 - Wallet Key: public & private
 
-Hash is recalculated at the time of verification to ensure the transaction is not tempered.
+## Validating Transaction
+
+We have the following ingredient to validate the transaction:
+
+- Input address - public key of the sender is derived from the input
+- Hash - recalculated at the time of verification to ensure the transaction is not
+- Signature - signed with provided key and hashed transaction
+
+We'll validate mining reward as a valid transaction even though it doesn't have input address.
 
 ## References
 
