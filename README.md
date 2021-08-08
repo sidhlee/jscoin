@@ -28,6 +28,15 @@ Miners choose which transaction to include in their block, and this is usually d
 
 Mining reward is added to the pending transaction, so it is not sent until it's included in a new block and validated.
 
+## Transaction Signature
+
+A unique signature is created for each transaction based on:
+
+- Transaction Data: hashed from input, output, and amount
+- Wallet Key: public & private
+
+Hash is recalculated at the time of verification to ensure the transaction is not tempered.
+
 ## References
 
 - [How do bitcoin transactions work?](https://www.coindesk.com/learn/bitcoin-101/how-do-bitcoin-transactions-work)

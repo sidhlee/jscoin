@@ -1,18 +1,68 @@
 import SHA256 from 'crypto-js/sha256';
+import { ec as EC, SignatureInput } from 'elliptic';
+
+const ec = new EC('sept256k1');
+
 // const SHA256 = require('crypto-js/sha256');
 
 class Transaction {
+  private signature: SignatureInput;
+
   /**
    *
-   * @param input address of the wallet from which the coin is sent
-   * @param output address of the wallet to which the coin is sent
+   * @param input address(public key) of the sender wallet(spender)
+   * @param output address(public key) of the receiver wallet
    * @param amount
    */
   constructor(
     public input: string | null,
     public output: string,
     public amount: number
-  ) {}
+  ) {
+    this.signature = [];
+  }
+
+  /** Create and store signature based on the hash (function of transaction info) and key */
+  sign(key: EC.KeyPair) {
+    if (key.getPublic('hex') !== this.input) {
+      throw new Error('You cannot sign transactions for other wallet.');
+    }
+
+    const hash = this.calcHash();
+    const signature = key.sign(hash, 'base64');
+    // DER encoded signature in array
+    this.signature = signature.toDER('hex');
+  }
+
+  isValid() {
+    // Validate mining reward that doesn't have input
+    if (this.input === null) return true;
+
+    if (!this.hasSignature()) {
+      throw new Error('No signature in this transaction.');
+    }
+
+    // import public key
+    const publicKey = ec.keyFromPublic(this.input, 'hex');
+
+    // Verify transaction with the key, signature and recalculated hash
+    return publicKey.verify(this.calcHash(), this.signature);
+  }
+
+  /** Calculate hash based on input & output address and amount  */
+  private calcHash() {
+    return SHA256(this.input + this.output + this.amount).toString();
+  }
+
+  private hasSignature() {
+    if (this.signature) return true;
+
+    if (Array.isArray(this.signature) && this.signature.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
 }
 
 class Block {
