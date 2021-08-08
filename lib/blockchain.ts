@@ -103,6 +103,16 @@ class Block {
   private isPOWValid(difficulty: number) {
     return this.hash.substring(0, difficulty) === '0'.repeat(difficulty);
   }
+
+  /** Validate all the transactions of the block */
+  hasValidTransactions() {
+    for (const tx of this.transactions) {
+      if (!tx.isValid()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 export class Blockchain {
@@ -136,7 +146,13 @@ export class Blockchain {
     ];
   }
 
-  createTransaction(transaction: Transaction) {
+  addTransaction(transaction: Transaction) {
+    if (!transaction.input || !transaction.output) {
+      throw new Error('Transaction must include input and output');
+    }
+    if (!transaction.isValid()) {
+      throw new Error('Cannot add invalid transaction to chain');
+    }
     this.pendingTransactions.push(transaction);
   }
 
@@ -164,15 +180,20 @@ export class Blockchain {
 
   isValid() {
     // Go through all added blocks and check:
-    // 1. if any attribute is tampered i.e. is the hash valid?
+    // 1. Do all the blocks have valid transactions?
+    // 2. if any attribute is tampered i.e. is the hash valid?
     //  - re-calculate the hash based on the current attributes and match that to the existing hash
-    // 2. if the hash is overwritten with re-calculated hash based on tampered attributes
+    // 3. if the hash is overwritten with re-calculated hash based on tampered attributes
     //  - hash might be valid but will not match next block's prevHash
 
     // What if the attacker tamper the last block and recalculate the hash?
     for (let i = 1; i < this.chain.length; i++) {
       const currentBlock = this.chain[i];
       const prevBlock = this.chain[i - 1];
+
+      if (!currentBlock.hasValidTransactions()) {
+        return false;
+      }
 
       const isHashValid = currentBlock.hash === currentBlock.calcHash();
       const isChainValid = currentBlock.prevHash === prevBlock.hash;
@@ -186,8 +207,8 @@ export class Blockchain {
 
 let jsCoin = new Blockchain();
 
-jsCoin.createTransaction(new Transaction('address1', 'address2', 100));
-jsCoin.createTransaction(new Transaction('address2', 'address1', 50));
+jsCoin.addTransaction(new Transaction('address1', 'address2', 100));
+jsCoin.addTransaction(new Transaction('address2', 'address1', 50));
 
 console.log('\n Starting the mining...');
 jsCoin.minePendingTransactions('avid_investor');
