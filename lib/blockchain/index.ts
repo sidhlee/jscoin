@@ -1,11 +1,11 @@
 import SHA256 from 'crypto-js/sha256';
 import { ec as EC, SignatureInput } from 'elliptic';
 
-const ec = new EC('sept256k1');
+const ec = new EC('secp256k1');
 
 // const SHA256 = require('crypto-js/sha256');
 
-class Transaction {
+export class Transaction {
   private signature: SignatureInput;
 
   /**
@@ -65,7 +65,7 @@ class Transaction {
   }
 }
 
-class Block {
+export class Block {
   public hash: string;
   public nonce: number;
   constructor(
@@ -205,22 +205,22 @@ export class Blockchain {
   }
 }
 
-let jsCoin = new Blockchain();
+// let jsCoin = new Blockchain();
 
-jsCoin.addTransaction(new Transaction('address1', 'address2', 100));
-jsCoin.addTransaction(new Transaction('address2', 'address1', 50));
+// jsCoin.addTransaction(new Transaction('address1', 'address2', 100));
+// jsCoin.addTransaction(new Transaction('address2', 'address1', 50));
 
-console.log('\n Starting the mining...');
-jsCoin.minePendingTransactions('avid_investor');
+// console.log('\n Starting the mining...');
+// jsCoin.minePendingTransactions('avid_investor');
 
-console.log(
-  '\nBalance of avid_investor is',
-  jsCoin.getBalanceOfAddress('avid_investor')
-);
+// console.log(
+//   '\nBalance of avid_investor is',
+//   jsCoin.getBalanceOfAddress('avid_investor')
+// );
 
-console.log('\n Starting the mining again...');
-jsCoin.minePendingTransactions('bot27');
-console.log(
-  '\nBalance of avid_investor is',
-  jsCoin.getBalanceOfAddress('avid_investor')
-);
+// console.log('\n Starting the mining again...');
+// jsCoin.minePendingTransactions('bot27');
+// console.log(
+//   '\nBalance of avid_investor is',
+//   jsCoin.getBalanceOfAddress('avid_investor')
+// );
