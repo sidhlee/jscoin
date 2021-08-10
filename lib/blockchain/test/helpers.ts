@@ -8,8 +8,9 @@ const key = ec.keyFromPrivate(
 );
 
 export function createSignedTransaction(amount = 10) {
-  console.debug('hey');
+  // Create transaction with input, output, and the amount
   const transaction = new Transaction(key.getPublic('hex'), 'wallet2', amount);
+  // Then sign it with the public-secret key pair
   transaction.sign(key);
 
   return transaction;

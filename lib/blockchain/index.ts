@@ -24,13 +24,16 @@ export class Transaction {
 
   /** Create and store signature based on the hash (function of transaction info) and key */
   sign(key: EC.KeyPair) {
+    // Validate if the signing key's public address matches the transaction input
+    // == "Prove me if you are the owner of the sending wallet with your secret key"
     if (key.getPublic('hex') !== this.input) {
       throw new Error('You cannot sign transactions for other wallet.');
     }
 
+    // Create a signature to "snapshot" transaction data
     const hash = this.calcHash();
     const signature = key.sign(hash, 'base64');
-    // DER encoded signature in array
+    // DER encoding is used in bitcoin
     this.signature = signature.toDER('hex');
   }
 

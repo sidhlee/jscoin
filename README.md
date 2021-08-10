@@ -20,9 +20,9 @@ A random number used to hash valid proof of work.
 
 ## Transaction
 
-Bitcoin uses its proof of work algorithm to create one new block every 10 minutes.
-All the transactions made in between blocks are temporarily stored in the transactions array, pending to be included in the next block.
-Miners choose which transaction to include in their block, and this is usually done by sorting transactions by fee and size to maximize their profit within 1mb block size limit. Therefore, transaction with higher fee will likely be included in the block quicker in order to be validated and confirmed.
+- Bitcoin uses its proof of work algorithm to create one new block every 10 minutes.
+- All the transactions made in between blocks are temporarily stored in the transactions array, pending to be included in the next block.
+- Miners choose which transaction to include in their block, and this is usually done by sorting transactions by fee and size to maximize their profit within 1mb block size limit. Therefore, transaction with higher fee will likely be included in the block quicker in order to be validated and confirmed.
 
 ## Mining Reward
 
