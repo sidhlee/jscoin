@@ -92,14 +92,14 @@ export class Block {
     ).toString();
   }
 
-  mine(difficulty: number) {
+  solve(difficulty: number) {
     // re-calculate & update hash until it meets the given proof of work
     while (!this.isPOWValid(difficulty)) {
       this.nonce++;
       this.hash = this.calcHash();
     }
 
-    console.log('Block mined: ' + this.hash);
+    console.log('Proof of work obtained: ' + this.hash);
   }
 
   /** Check if the hash satisfies the proof of work */
@@ -121,34 +121,19 @@ export class Block {
 export class Blockchain {
   public chain: Block[] = [this.createGenesisBlock()];
   public pendingTransactions: Transaction[] = [];
-  private difficulty = 2;
-  public miningReward = 100;
+  public difficulty = 2;
+  public miningReward = 6.25;
   constructor() {}
 
   createGenesisBlock() {
-    return new Block(new Date('2021-08-01').getTime(), [], '0');
+    return new Block(new Date().getTime(), [], '0');
   }
 
   getLastBlock() {
     return this.chain[this.chain.length - 1];
   }
 
-  minePendingTransactions(miningRewardAddress: string) {
-    // In real life, adding all the pending transactions are not possible because there are too many for 1mb block size limit.
-    // So miners get to choose which transactions to include
-    let block = new Block(Date.now(), this.pendingTransactions);
-    block.mine(this.difficulty);
-
-    console.log('Block successfully mined');
-    this.chain.push(block);
-
-    // clear pending transactions
-    this.pendingTransactions = [
-      // there is no input for mine reward
-      new Transaction(null, miningRewardAddress, this.miningReward),
-    ];
-  }
-
+  /** Validate and add transaction to pending transactions */
   addTransaction(transaction: Transaction) {
     if (!transaction.input || !transaction.output) {
       throw new Error('Transaction must include input and output');
@@ -156,7 +141,46 @@ export class Blockchain {
     if (!transaction.isValid()) {
       throw new Error('Cannot add invalid transaction to chain');
     }
+
+    if (transaction.amount <= 0) {
+      throw new Error('Transaction amount must be greater than 0');
+    }
+
+    const inputBalance = this.getBalanceOfAddress(transaction.input);
+    const transactionAmount = transaction.amount;
+    if (inputBalance < transactionAmount) {
+      throw new Error(
+        `Not enough balance. balance: ${inputBalance}, amount ${transactionAmount}`
+      );
+    }
+
     this.pendingTransactions.push(transaction);
+  }
+
+  minePendingTransactions(miningRewardAddress: string) {
+    // Create reward transaction and add tot the pending transactions array
+    const rewardTransaction = new Transaction(
+      null,
+      miningRewardAddress,
+      this.miningReward
+    );
+    this.pendingTransactions.push(rewardTransaction);
+
+    // In real life, adding all the pending transactions are not possible because there are too many for 1mb block size limit.
+    // So miners get to choose which transactions to include
+    let block = new Block(
+      Date.now(),
+      this.pendingTransactions,
+      this.getLastBlock().hash
+    );
+
+    block.solve(this.difficulty);
+
+    console.log('Block successfully mined');
+    this.chain.push(block);
+
+    // clear pending transactions
+    this.pendingTransactions = [];
   }
 
   /**
